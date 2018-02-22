@@ -1,0 +1,32 @@
+{
+  "name": "nri",
+  "version": "0.9.0",
+  "description": "NPM remote install tool",
+  "main": "index.js",
+  "bin": {
+    "nri": "bin/nri.js"
+  },
+  "scripts": {
+    "test": "echo no tests\\; sorry..."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Zingle/nri.git"
+  },
+  "keywords": [
+    "SSH",
+    "sudo",
+    "global"
+  ],
+  "author": "Richard Remer <reanjr@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Zingle/nri/issues"
+  },
+  "homepage": "https://github.com/Zingle/nri#readme",
+  "dependencies": {
+    "fstream-npm": "^1.2.1",
+    "ssh-exec": "^2.0.0",
+    "tar-pack": "^3.4.1"
+  }
+}

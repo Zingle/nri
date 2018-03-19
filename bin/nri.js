@@ -2,31 +2,41 @@
 
 const {assign} = Object;
 const {realpath} = require("fs");
-const {basename} = require("path");
-const {userInfo} = require("os");
-const {Writable} = require("stream");
 const {pack: tar} = require("tar-pack");
 const ssh = require("ssh-exec");
 const readpkg = require("fstream-npm");
+const config = require("../lib/config");
+const stringWriter = require("../lib/string-writer");
 
-const user = userInfo().username;
-const [node, script, path, host] = process.argv;
+const {node, script, path, host, user, key} = config.argv(process.argv);
+const sshopts = {host, user, key};
 
-if (!path) usage(new Error("project path required"));
-if (!host) usage(new Error("remote SSH host required"));
-
-makeInstallDir()
+resolveKey()
+    .then(makeInstallDir)
     .then(installDir => copyPackage(path, installDir))
     .then(install)
     .then(clean)
-    .catch(fail);
+    .catch(err => {
+        console.error(process.env.DEBUG ? err.stack : err.message);
+        process.exit(1);
+    });
+
+function resolveKey() {
+    return new Promise((resolve, reject) => {
+        if (!sshopts.key) resolve(sshopts.key);
+        else realpath(sshopts.key, (err, path) => {
+            if (!err) sshopts.key = path;
+            resolve(sshopts.key);
+        });
+    });
+}
 
 function makeInstallDir() {
     console.info("creating remote working directory");
 
     return new Promise((resolve, reject) => {
         const output = stringWriter();
-        const cmd = ssh("mktemp -d", {user, host});
+        const cmd = ssh("mktemp -d", sshopts);
 
         cmd.pipe(output);
         cmd.on("error", reject);
@@ -42,7 +52,7 @@ function copyPackage(local, remote) {
 
     return new Promise((resolve, reject) => {
         const tarball = tar(readpkg(local));
-        const cmd = ssh(`cd ${remote} && tar xz 2>&1`, {user, host});
+        const cmd = ssh(`cd ${remote} && tar xz 2>&1`, sshopts);
 
         cmd.pipe(process.stdout);
         cmd.on("error", reject);
@@ -60,7 +70,7 @@ function install(remote) {
 
     return new Promise((resolve, reject) => {
         const path = `${remote}/package`;
-        const cmd = ssh(`cd ${path} && sudo -H npm install -g 2>&1`, {user, host});
+        const cmd = ssh(`cd ${path} && sudo -H npm install -g 2>&1`, sshopts);
 
         cmd.pipe(process.stdout);
         cmd.on("error", reject);
@@ -75,31 +85,12 @@ function clean(remote) {
     console.info(`cleaning up ${host}:${remote}`);
 
     return new Promise((resolve, reject) => {
-        const cmd = ssh(`rm -fr ${remote}`, {user, host});
+        const cmd = ssh(`rm -fr ${remote}`, sshopts);
 
         cmd.on("error", reject);
         cmd.on("exit", code => {
             if (code) reject(new Error("could not cleanup install dir"));
             else resolve(remote);
         });
-    });
-}
-
-function usage(err) {
-    const name = basename(script, ".js");
-    console.log(`Usage: ${name} <pkg-path> <host>`);
-    if (err) fail(err);
-}
-
-function fail(err) {
-    console.error(process.env.DEBUG ? err.stack : err.message);
-    process.exit(1);
-}
-
-function stringWriter() {
-    var value = "";
-
-    return assign(new Writable({write(s, _, cb) {value += s; cb();}}), {
-        toString: () => value
     });
 }

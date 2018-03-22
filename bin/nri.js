@@ -46,7 +46,7 @@ function copyPackage(local, remote) {
 
 function install(remote) {
     console.info(`running installer from ${remote} on ${host}`);
-    return ssh(`sudo -H npm install -g --prefix ${path} 2>&1`)
+    return ssh(`cd ${path} && sudo -H npm install -g 2>&1`)
         .then(() => remote);
 }
 

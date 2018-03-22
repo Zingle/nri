@@ -1,6 +1,6 @@
 {
   "name": "nri",
-  "version": "0.9.5",
+  "version": "0.9.6",
   "description": "NPM remote install tool",
   "main": "index.js",
   "bin": {

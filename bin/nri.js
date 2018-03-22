@@ -70,7 +70,7 @@ function install(remote) {
 
     return new Promise((resolve, reject) => {
         const path = `${remote}/package`;
-        const cmd = ssh(`sudo -H npm --prefix ${path} install -g 2>&1`, sshopts);
+        const cmd = ssh(`sudo -H npm install -g --prefix ${path} 2>&1`, sshopts);
 
         cmd.pipe(process.stdout);
         cmd.on("error", reject);

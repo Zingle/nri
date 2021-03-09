@@ -13,7 +13,7 @@ declare host remote pkg
 declare tmpdir=$(mktemp -d);        trap "rm -rf $tmpdir" EXIT
 
 echo "bundling package"
-pkg=$(cd $tmpdir; npm pack $pkgdir)
+pkg=$(cd $tmpdir; npm pack $pkgdir | tail -n1)
 
 for host in "$@"; do
     echo "creating remote working directory on $host"
